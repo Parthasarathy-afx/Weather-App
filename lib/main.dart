@@ -108,7 +108,9 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         final data = jsonDecode(response.body);
 
         setState(() {
-          city = data['city']['name'];
+          if (city == "Loading..." || city.isEmpty) {
+            city = data['city']['name'];
+          }
 
           temp = data['list'][0]['main']['temp'].toDouble();
 
@@ -148,7 +150,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
       });
 
       final geoUrl =
-          "https://api.openweathermap.org/geo/1.0/direct?q=${Uri.encodeComponent(cityName)}&limit=5&appid=$apiKey";
+          "https://api.openweathermap.org/geo/1.0/direct?q=${Uri.encodeComponent(cityName)}&limit=10&appid=$apiKey";
 
       final geoRes = await http.get(Uri.parse(geoUrl));
 
@@ -162,9 +164,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              "\"$cityName\" not found",
-            ),
+            content: Text("\"$cityName\" not found"),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -173,11 +173,17 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         return;
       }
 
-      //  BEST MATCH
+      // ✅ BEST MATCH
       double lat = geoData[0]['lat'];
       double lon = geoData[0]['lon'];
 
-      city = geoData[0]['name'];
+      String cityResult = geoData[0]['name'];
+      String? state = geoData[0]['state'];
+      String country = geoData[0]['country'];
+
+      city = state != null && state.isNotEmpty
+          ? "$cityResult, $state"
+          : "$cityResult, $country";
 
       await getWeather(lat, lon);
     } catch (e) {
@@ -189,9 +195,7 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            "Something went wrong",
-          ),
+          content: Text("Something went wrong"),
           backgroundColor: Colors.red,
         ),
       );
@@ -588,4 +592,3 @@ class GlassCard extends StatelessWidget {
     );
   }
 }
- 
